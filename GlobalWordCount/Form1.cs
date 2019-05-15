@@ -14,6 +14,17 @@ namespace GlobalWordCount
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
         [DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+        [DllImport("shcore.dll")]
+        private static extern int SetProcessDpiAwareness(ProcessDPIAwareness value);
+
+        private enum ProcessDPIAwareness
+        {
+            ProcessDPIUnaware = 0,
+            ProcessSystemDPIAware = 1,
+            ProcessPerMonitorDPIAware = 2
+        }
 
         enum KeyModifier
         {
@@ -26,6 +37,7 @@ namespace GlobalWordCount
 
         public Form1()
         {
+            SetDpiAwareness();
             InitializeComponent();
 
             notifyIcon1.BalloonTipIcon = ToolTipIcon.Info; //Shows the info icon so the user doesn't think there is an error.
@@ -82,8 +94,13 @@ namespace GlobalWordCount
 
                 notifyIcon1.ShowBalloonTip(3000);
 
-                if(prev != null && prev != "")
-                    Clipboard.SetText(prev, TextDataFormat.Text);
+                try
+                {
+                    if (prev != null || prev != "")
+                        Clipboard.SetText(prev, TextDataFormat.Text);
+                }
+                catch
+                { }
             }
         }
 
@@ -139,6 +156,17 @@ namespace GlobalWordCount
                 }
             }
             return false;   
+        }
+        private static void SetDpiAwareness()
+        {
+            try
+            {
+                if (Environment.OSVersion.Version.Major >= 6)
+                    SetProcessDpiAwareness(ProcessDPIAwareness.ProcessPerMonitorDPIAware);
+            }
+            catch (EntryPointNotFoundException)
+            {
+            }
         }
     }
 }
